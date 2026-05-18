@@ -1,0 +1,72 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    // ───────────────────────────────────────────────────────────────────────
+    // OUTPUT TARGET
+    // ───────────────────────────────────────────────────────────────────────
+    // WHY es2023? All evergreen browsers (Chrome/Edge/Safari/Firefox in 2026)
+    // support it natively. Lower target = polyfills = bigger bundle = slower app.
+    // Only lower this if you need IE11 (you don't — IE is dead).
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    // ───────────────────────────────────────────────────────────────────────
+    // BUNDLER MODE — required when Vite/esbuild/Rollup do the bundling
+    // ───────────────────────────────────────────────────────────────────────
+    // `moduleResolution: bundler` mirrors how Vite resolves imports.
+    // Lets you import `.ts` files and use `package.json` "exports" field.
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    // `react-jsx` enables the new JSX transform → no `import React` needed in every file.
+    "jsx": "react-jsx",
+
+    // ───────────────────────────────────────────────────────────────────────
+    // STRICTNESS — catch bugs at compile time, not in production
+    // ───────────────────────────────────────────────────────────────────────
+    // WHY all of these? Every flag here is a known production bug pattern.
+    // Senior teams turn them ALL on. If you can't ship with strict, your design
+    // has a hole — fix the design, don't loosen the compiler.
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "alwaysStrict": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+
+    // Extra lints — Vite's default + a few high-value ones.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "erasableSyntaxOnly": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
+    // ───────────────────────────────────────────────────────────────────────
+    // PATH ALIASES — must mirror vite.config.ts `resolve.alias`
+    // ───────────────────────────────────────────────────────────────────────
+    // WHY mirror? TypeScript only knows about `paths`; Vite only knows about
+    // `resolve.alias`. They are TWO SEPARATE resolvers. If they disagree, your
+    // editor shows errors but `npm run dev` succeeds (or vice versa).
+    // KEEP THEM IN SYNC. Failed interview question alert: "How do you set up
+    // path aliases in a Vite + TS project?" — answer references BOTH files.
+    //
+    // NOTE: TS 6 deprecated `baseUrl`. Paths now resolve relative to THIS file's
+    // location automatically — so `@/*` → `<dir of this tsconfig>/src/*`. Cleaner.
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}

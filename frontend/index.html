@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="AI-powered resume builder — create ATS-friendly resumes with a chat assistant."
+    />
+    <meta name="theme-color" content="#0b1220" />
+    <title>Resume-AI — Build ATS-friendly resumes with AI</title>
+  </head>
+  <body>
+    <!--
+      WHY a single root div?
+        React mounts its virtual DOM into ONE host node. Everything else (modals,
+        toasts, tooltips) renders here too — usually via React Portals for things
+        that need to escape parent overflow/z-index.
+
+      WHY <noscript> matters?
+        If a user has JS disabled (or your bundle fails to load), they see this
+        instead of a blank white page. Tiny accessibility win; recruiters notice.
+    -->
+    <div id="root"></div>
+    <noscript>You need to enable JavaScript to run Resume-AI.</noscript>
+    <!--
+      WHY type="module"?
+        Tells the browser to parse this script as an ES module. Enables `import`
+        statements natively in the browser → which is how Vite serves dev files
+        without bundling. This single attribute is the whole reason Vite is fast.
+    -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

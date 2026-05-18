@@ -1,0 +1,15 @@
+# Runs after you write a commit message, BEFORE the commit is created.
+#
+# Reads the message from .git/COMMIT_EDITMSG (passed as $1) and validates it
+# against commitlint.config.js (Conventional Commits).
+#
+# Examples that PASS:
+#   feat(chat): add streaming SSE response
+#   fix(auth): handle expired JWT on refresh
+#   docs(readme): explain Phase 3 state management
+#
+# Examples that FAIL:
+#   fixed stuff
+#   WIP
+#   updated files
+npx --no -- commitlint --edit "$1"

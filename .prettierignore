@@ -1,0 +1,15 @@
+# Don't waste time formatting generated or vendored code.
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.turbo/
+*.tsbuildinfo
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.husky/_/
+__pycache__/
+.venv/
+venv/

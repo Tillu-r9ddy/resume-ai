@@ -1,0 +1,10 @@
+# Runs on `git commit` BEFORE the commit is created.
+#
+# WHY lint-staged?
+#   • Runs linters/formatters only on files in the staging area — fast even on huge repos.
+#   • Auto-fixes (Prettier write, ESLint --fix) and re-stages, so the commit reflects
+#     formatted code without an extra round-trip.
+#
+# If a check fails (e.g. ESLint error), the commit is aborted. Fix and re-stage.
+# To skip in an emergency: `git commit --no-verify` (don't make a habit of it).
+npx lint-staged

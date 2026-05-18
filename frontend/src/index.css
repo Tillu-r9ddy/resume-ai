@@ -1,0 +1,25 @@
+/*
+ * Minimal global reset + dark-mode-by-default canvas.
+ * In Phase 2 we'll replace this with Tailwind's preflight + design tokens.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0b1220;
+  color: #e6e8eb;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

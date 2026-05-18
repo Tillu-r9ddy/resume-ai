@@ -1,0 +1,28 @@
+# EditorConfig — https://editorconfig.org
+# WHY: Different teammates use different editors (VS Code, Cursor, JetBrains, vim).
+# Without this file, one teammate's editor inserts tabs, another's inserts spaces,
+# and every PR has whitespace noise. EditorConfig is honored natively by most
+# editors and enforces consistency BEFORE Prettier even runs.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+[*.md]
+# Markdown is sensitive: two trailing spaces = line break, so don't trim.
+trim_trailing_whitespace = false
+
+[*.{py,pyi}]
+# Python convention is 4-space indents (PEP 8).
+indent_size = 4
+
+[Makefile]
+# Make REQUIRES literal tabs for recipe lines.
+indent_style = tab
