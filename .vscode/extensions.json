@@ -1,0 +1,14 @@
+{
+  "//": "When you open this repo in VS Code, it pops a banner: 'This workspace has recommended extensions. Install them?' — click yes. New teammates get the same toolchain instantly. This file IS committed (see .gitignore exceptions).",
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "bradlc.vscode-tailwindcss",
+    "streetsidesoftware.code-spell-checker",
+    "yoavbls.pretty-ts-errors",
+    "usernamehw.errorlens",
+    "eamodio.gitlens"
+  ],
+  "unwantedRecommendations": []
+}

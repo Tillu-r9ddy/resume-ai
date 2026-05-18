@@ -1,0 +1,93 @@
+{
+  "//": "Workspace settings — applied to this folder only, override personal user settings. Committed to git so the team shares one source of truth.",
+
+  // ── FORMAT ON SAVE ───────────────────────────────────────────────────────
+  // WHY: prevents 'format the whole file' diffs in PRs. Every save = perfectly
+  // formatted code matching .prettierrc.json. No mental overhead, no debates.
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // ── ESLINT AUTO-FIX ──────────────────────────────────────────────────────
+  // 'explicit' = only on explicit save (Cmd/Ctrl+S). 'always' = also fix on
+  // every keystroke pause — annoying. 'never' = manual only.
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  // ── PER-LANGUAGE FORMATTER OVERRIDES ─────────────────────────────────────
+  // Even though Prettier is default, being explicit prevents surprises if you
+  // ever install another formatter (e.g. Biome) that auto-claims a language.
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+
+  // ── TYPESCRIPT ───────────────────────────────────────────────────────────
+  // Use the TS version from node_modules, not VS Code's bundled one. Critical
+  // when the repo uses TS 6 but your editor ships TS 5 — types disagree.
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  // Auto-import full module paths (use @/ alias instead of relative ../../..)
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  // Show inlay hints for parameter names, return types — accelerates reading.
+  "typescript.inlayHints.parameterNames.enabled": "literals",
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": false,
+
+  // ── ESLINT ───────────────────────────────────────────────────────────────
+  // Tell ESLint which folders to actually lint (avoids it crawling node_modules).
+  "eslint.workingDirectories": [{ "pattern": "frontend" }],
+  "eslint.useFlatConfig": true,
+
+  // ── EDITOR ETIQUETTE ─────────────────────────────────────────────────────
+  "editor.rulers": [100],
+  "editor.tabSize": 2,
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.eol": "\n",
+
+  // ── SEARCH / EXPLORER NOISE REDUCTION ────────────────────────────────────
+  // Hide generated and noisy folders from the file tree and search.
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.vite": true,
+    "**/coverage": true,
+    "**/*.tsbuildinfo": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/package-lock.json": true,
+    "**/.vite": true
+  },
+
+  // ── GIT ──────────────────────────────────────────────────────────────────
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+
+  // ── SPELL CHECK (quietly improves README/docs quality) ───────────────────
+  "cSpell.words": [
+    "Tilak",
+    "Vasa",
+    "tsbuildinfo",
+    "tseslint",
+    "esbuild",
+    "tanstack",
+    "zustand",
+    "jotai",
+    "commitlint",
+    "ollama",
+    "fastapi",
+    "vite",
+    "vitest",
+    "playwright",
+    "storybook"
+  ]
+}
