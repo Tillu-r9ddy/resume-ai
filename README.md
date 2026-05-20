@@ -16,17 +16,17 @@ Every config file, every component, every commit message is annotated with a **W
 
 ## What you'll find here (by phase)
 
-| Phase | Topic                                                                               | Status                               |
-| ----- | ----------------------------------------------------------------------------------- | ------------------------------------ |
-| 1     | Foundation — Vite + TS + tooling + parallel webpack lesson                          | ✅                                   |
-| 2     | React Router, code splitting, Suspense, error boundaries, Tailwind v4 + Shell       | ✅                                   |
-| 3     | State management tour (Zustand · RTK · TanStack Query · Jotai · Context done right) | 🟡 3a Zustand ✅ · 3b RTK ✅ (in 4a) |
-| 4     | Forms with React Hook Form + Zod, field arrays, controlled vs uncontrolled          | 🟡 4a store ✅ · 4b header form ✅   |
-| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ⏳                                   |
-| 6     | FastAPI + Ollama backend, SSE streaming, RAG, tool calling                          | ⏳                                   |
-| 7     | Concurrent React, optimistic updates, PDF generation                                | ⏳                                   |
-| 8     | Testing — Vitest · RTL · Playwright · Storybook · MSW                               | ⏳                                   |
-| 9     | CI/CD with GitHub Actions, Docker, open-source deploy                               | ⏳                                   |
+| Phase | Topic                                                                               | Status                                         |
+| ----- | ----------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1     | Foundation — Vite + TS + tooling + parallel webpack lesson                          | ✅                                             |
+| 2     | React Router, code splitting, Suspense, error boundaries, Tailwind v4 + Shell       | ✅                                             |
+| 3     | State management tour (Zustand · RTK · TanStack Query · Jotai · Context done right) | 🟡 3a Zustand ✅ · 3b RTK ✅ (in 4a)           |
+| 4     | Forms with React Hook Form + Zod, field arrays, controlled vs uncontrolled          | 🟡 4a store ✅ · 4b header ✅ · 4c sections ✅ |
+| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ⏳                                             |
+| 6     | FastAPI + Ollama backend, SSE streaming, RAG, tool calling                          | ⏳                                             |
+| 7     | Concurrent React, optimistic updates, PDF generation                                | ⏳                                             |
+| 8     | Testing — Vitest · RTL · Playwright · Storybook · MSW                               | ⏳                                             |
+| 9     | CI/CD with GitHub Actions, Docker, open-source deploy                               | ⏳                                             |
 
 Per-phase deep dives live in [`docs/`](./docs/).
 
