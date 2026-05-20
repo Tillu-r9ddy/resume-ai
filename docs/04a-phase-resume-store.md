@@ -36,7 +36,8 @@ persistReducer(undoable(resumeReducer))
 
 - **Inner** — `resumeReducer` operates on a plain `Resume`. Knows nothing about undo or persistence. Single responsibility: business logic.
 - **Middle** — `undoable(...)` from `redux-undo` wraps it. Output shape becomes `{ past: Resume[], present: Resume, future: Resume[] }`. `limit: 50` caps history (memory). `neverSkipReducer: true` is critical so redux-persist's `REHYDRATE` action still reaches the inner reducer.
-- **Outer** — `persistReducer(...)` mirrors state to `localStorage` on every dispatch and restores it on rehydration. A custom `presentOnlyTransform` strips `past`/`future` from the persisted snapshot — undo history across browser sessions is unusual UX and the storage savings are real.
+- **Outer** — `persistReducer(...)` mirrors state to `localStorage` on every dispatch and restores it on rehydration. The persist config passes `whitelist: ['present']`, which is the slice-level allowlist of top-level keys to persist. Result: only `present` round-trips through storage; `past`/`future` restart empty on every browser session. Undo history across sessions is unusual UX and the storage savings are real.
+  - **Footnote / lesson learned:** an earlier draft used `createTransform(..., { whitelist: ['resume'] })` for the same purpose. That was a misuse of the transform API — transform's `whitelist` filters by _sub-key name_ within the state, and `'resume'` isn't a sub-key of `{past, present, future}`, so the transform was silently skipped and the whole undoable shape got persisted anyway. The slice-level `whitelist: ['present']` on persistConfig is both shorter and actually correct.
 
 ### 5. Serializability check whitelist
 
@@ -79,8 +80,8 @@ persistReducer(undoable(resumeReducer))
 > **Q:** How do you compose redux-undo and redux-persist?
 > **A:** Outside-in: `persistReducer(persistConfig, undoable(reducer, undoableConfig))`. The undoable wrapper produces `{past, present, future}`; persistReducer mirrors that to storage. Pair it with `neverSkipReducer: true` on the undoable config so redux-persist's `REHYDRATE` action still flows through to the inner reducer.
 
-> **Q:** Why use a custom transform that persists only `present`?
-> **A:** Without it, every undo history entry (up to 50) gets serialised on every change — localStorage bloats and writes get slow. The transform strips past/future on the way in, and rebuilds them empty on the way out. Trade-off: undo history doesn't survive a reload. That's the right call for a doc editor; if you needed cross-session undo, you'd persist the whole shape.
+> **Q:** Why persist only `present` and not the whole undoable state?
+> **A:** Without filtering, every undo history entry (up to 50 copies of the document) gets serialised on every change — localStorage bloats and writes get slow. Pass `whitelist: ['present']` on the persistConfig so only that top-level key of the undoable state gets written; past/future restart empty on every browser session. Trade-off: undo history doesn't survive a reload. That's the right call for a doc editor; if you needed cross-session undo, you'd drop the whitelist. **Gotcha:** don't reach for `createTransform` here — that API's `whitelist` filters by sub-key name within the per-key value, not by top-level state key, and it's easy to misuse such that the transform silently no-ops.
 
 > **Q:** Why disable the serializability check for redux-persist actions?
 > **A:** redux-persist dispatches actions with non-serialisable payloads (Promises). RTK's default middleware warns on every one. You whitelist those specific action types instead of turning the check off entirely — that way your own reducers still get policed.
