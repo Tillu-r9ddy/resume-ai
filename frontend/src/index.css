@@ -1,25 +1,77 @@
 /*
- * Minimal global reset + dark-mode-by-default canvas.
- * In Phase 2 we'll replace this with Tailwind's preflight + design tokens.
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Tailwind CSS v4 — entry stylesheet
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * WHY a single `@import "tailwindcss";`?
+ *   Tailwind 4 ships ONE import that expands into:
+ *     • Preflight (modern CSS reset, normalises browser defaults)
+ *     • The utility layer (every `flex`, `p-4`, `text-sm`, etc.)
+ *     • The component & base layers (yours to extend below)
+ *   In v3 you had THREE `@tailwind base|components|utilities;` directives. The
+ *   single import is the new idiom.
+ *
+ * WHY no `tailwind.config.js`?
+ *   v4 moved config INTO CSS via the `@theme` directive (below). Benefits:
+ *     • One language to learn (CSS), not JS-flavoured config
+ *     • Theme tokens become real CSS custom properties → usable outside Tailwind
+ *     • Hot reload picks up theme changes instantly
+ *
+ * WHY explicit `@source` lines?
+ *   v4 auto-discovers source files in most setups, but being explicit is
+ *   bulletproof on Windows + monorepos and documents intent for new contributors.
  */
+@import 'tailwindcss';
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@source "./**/*.{ts,tsx}";
+@source "../index.html";
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Design tokens — the project's *visual* language
+ * ─────────────────────────────────────────────────────────────────────────────
+ * `@theme` defines CSS custom properties that Tailwind also exposes as utility
+ * classes. For example, declaring `--color-surface: #111726;` here gives you
+ * `bg-surface`, `text-surface`, `border-surface`, etc. — no JS config needed.
+ *
+ * Keep this list short and intentional. A bloated palette is worse than no
+ * palette (decision fatigue + inconsistent UI). Add a token only when you use
+ * it in two or more places.
+ */
+@theme {
+  /* Brand & surface colors — dark canvas with a single accent. */
+  --color-canvas: #0b1220; /* page background */
+  --color-surface: #111726; /* cards / sidebar */
+  --color-surface-2: #1c2434; /* hover / nested */
+  --color-border: #2a3340;
+  --color-ink: #e6e8eb; /* primary text */
+  --color-ink-muted: #9aa3ad; /* secondary text */
+  --color-accent: #6ea8fe; /* links / focus rings */
+  --color-accent-soft: #1e3a8a; /* accent backgrounds */
+
+  /* Type scale — keep it small; you'll thank yourself later. */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Tiny base layer — only the things Preflight doesn't handle for us.
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Resist adding more here. If a rule could be a utility class, prefer the
+ * utility class — keeps style logic local to the component.
+ */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
 
-body {
-  background: #0b1220;
-  color: #e6e8eb;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 
 /**
@@ -29,6 +30,24 @@ export default defineConfig({
      *   • Automatic JSX runtime (no need to `import React from 'react'` everywhere)
      */
     react(),
+
+    /**
+     * Tailwind v4's first-party Vite plugin.
+     *
+     * WHY this and not the classic `postcss + tailwind.config.js` setup?
+     *   Tailwind 4 ships its own high-performance engine (built on Lightning CSS).
+     *   The Vite plugin scans your source files itself, generates the utility CSS,
+     *   and HMR-updates styles without a PostCSS round-trip. Result: dev rebuilds
+     *   are ~5× faster, and there's NO `tailwind.config.js` to maintain — config
+     *   moves into your CSS via the `@theme` directive (see src/index.css).
+     *
+     * Interview hook: "How does Tailwind 4 differ from Tailwind 3?"
+     *   • Zero-JS-config (CSS-first config with @theme)
+     *   • Lightning CSS engine → faster, smaller output
+     *   • Native CSS cascade layers
+     *   • Auto content detection (no `content: [...]` array)
+     */
+    tailwindcss(),
   ],
 
   resolve: {
