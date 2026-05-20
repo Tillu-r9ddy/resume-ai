@@ -77,3 +77,10 @@ venv/
 # Husky internals
 # ─────────────────────────────────────────────────────────────────────────────
 .husky/_/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Claude Code local state
+# WHY: Per-developer agent settings, hooks, and transcripts. Not project source.
+# Teammates set up their own .claude/ when they install Claude Code.
+# ─────────────────────────────────────────────────────────────────────────────
+.claude/
