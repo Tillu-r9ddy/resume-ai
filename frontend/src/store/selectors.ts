@@ -14,7 +14,7 @@
  * For Phase 4b we only need `selectHeader`. As 4c/4d arrive we'll add
  * selectSections, selectSectionById, etc.
  */
-import type { Header } from '../schema/resume';
+import type { Header, Section } from '../schema/resume';
 import type { RootState } from './index';
 
 /**
@@ -35,3 +35,19 @@ export const selectHeader = (state: RootState): Header | null => {
  * All sections, in render order. Used by the Preview pane.
  */
 export const selectSections = (state: RootState) => state.resume.present.sections;
+
+/**
+ * Find a section by id. Returns `undefined` if the section isn't in the
+ * current document (likely because it was just removed elsewhere). Section
+ * forms guard on this — when a form's section disappears mid-render the
+ * form unmounts cleanly.
+ *
+ * Note: this returns the *discriminated-union* Section type. Callers narrow
+ * via `section.type === 'experience'` etc. RTK doesn't memoise this for us;
+ * for 4c the cost is negligible, but in 4d/5 we'll wrap with createSelector
+ * if the section-form list grows beyond a handful.
+ */
+export const selectSectionById =
+  (id: string) =>
+  (state: RootState): Section | undefined =>
+    state.resume.present.sections.find((s) => s.id === id);

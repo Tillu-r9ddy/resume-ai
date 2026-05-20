@@ -38,8 +38,37 @@
  *   like `dispatch(addSection('experience'))` — the wrapping is invisible.
  */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { newId, type Header, type Resume, type SectionType } from '../schema/resume';
-import { makeSection, seedResume } from './seedResume';
+import {
+  newId,
+  type EducationItem,
+  type ExperienceItem,
+  type Header,
+  type ProjectItem,
+  type Resume,
+  type SectionType,
+  type SkillsItem,
+} from '../schema/resume';
+import {
+  makeEducationItem,
+  makeExperienceItem,
+  makeProjectItem,
+  makeSection,
+  makeSkillsItem,
+  seedResume,
+} from './seedResume';
+
+/**
+ * Discriminated map from section type → its item shape. Lets `addItem`
+ * narrow the payload type once at the call site without leaking the union
+ * through to consumers.
+ */
+type ItemFor = {
+  experience: ExperienceItem;
+  education: EducationItem;
+  skills: SkillsItem;
+  projects: ProjectItem;
+};
+type RepeatingSectionType = keyof ItemFor;
 
 /**
  * Initial state — a fresh seed each store boot. redux-persist will REPLACE
@@ -101,6 +130,97 @@ const resumeSlice = createSlice({
      * history doesn't confuse "reset to seed" with "we're back at the start".
      */
     resetResume: () => ({ ...seedResume(), id: newId() }),
+
+    // ── Item-level reducers (Phase 4c) ────────────────────────────────────
+    // These all share the same shape: find the section by id, then mutate
+    // its items array. The section-type guard inside each reducer narrows
+    // the discriminated union — without it, TS can't prove that
+    // `section.items` exists (header sections don't have items).
+
+    /**
+     * Append a new empty item to a repeating section. Type is inferred from
+     * the section we found, so the caller doesn't need to repeat it.
+     * No-op for header sections (they're singletons).
+     */
+    addItem: (state, action: PayloadAction<{ sectionId: string }>) => {
+      const section = state.sections.find((s) => s.id === action.payload.sectionId);
+      if (!section || section.type === 'header') return;
+      // Switch on the narrowed type so we call the right factory.
+      switch (section.type) {
+        case 'experience':
+          section.items.push(makeExperienceItem());
+          break;
+        case 'education':
+          section.items.push(makeEducationItem());
+          break;
+        case 'skills':
+          section.items.push(makeSkillsItem());
+          break;
+        case 'projects':
+          section.items.push(makeProjectItem());
+          break;
+      }
+    },
+
+    /**
+     * Remove an item from a repeating section by id. Splice instead of
+     * filter so Immer produces a small patch.
+     */
+    removeItem: (state, action: PayloadAction<{ sectionId: string; itemId: string }>) => {
+      const section = state.sections.find((s) => s.id === action.payload.sectionId);
+      if (!section || section.type === 'header') return;
+      const idx = section.items.findIndex((item) => item.id === action.payload.itemId);
+      if (idx >= 0) section.items.splice(idx, 1);
+    },
+
+    /**
+     * Patch a single item inside a repeating section. `patch` is a Partial
+     * of whatever item shape that section owns — we use a structural
+     * Object.assign so the caller doesn't have to spell every field.
+     *
+     * Type assertion note: TS can't prove `patch` matches `section.items[i]`
+     * here because the section type is widened to the discriminated union.
+     * The caller is responsible for sending a patch that fits the section's
+     * type. In practice the section forms are typed per-section, so this
+     * is safe at the boundary.
+     */
+    updateItem: <T extends RepeatingSectionType>(
+      state: Resume,
+      action: PayloadAction<{
+        sectionId: string;
+        itemId: string;
+        patch: Partial<ItemFor[T]>;
+      }>,
+    ) => {
+      const section = state.sections.find((s) => s.id === action.payload.sectionId);
+      if (!section || section.type === 'header') return;
+      const item = section.items.find((it) => it.id === action.payload.itemId);
+      if (item) Object.assign(item, action.payload.patch);
+    },
+
+    /**
+     * Reorder a section's items to the exact order given by `itemIds`.
+     * Ids not present in the section are dropped; ids in the section but
+     * missing from the new order keep their current relative position at
+     * the end (defensive — shouldn't happen if the UI is sending a complete
+     * list, but cheaper than throwing).
+     */
+    reorderItems: (state, action: PayloadAction<{ sectionId: string; itemIds: string[] }>) => {
+      const section = state.sections.find((s) => s.id === action.payload.sectionId);
+      if (!section || section.type === 'header') return;
+      const byId = new Map(section.items.map((it) => [it.id, it]));
+      const reordered: typeof section.items = [];
+      for (const id of action.payload.itemIds) {
+        const item = byId.get(id);
+        if (item) {
+          reordered.push(item as never);
+          byId.delete(id);
+        }
+      }
+      // Append any leftovers (defensive).
+      for (const leftover of byId.values()) reordered.push(leftover as never);
+      section.items = reordered as never;
+    },
   },
 });
 
@@ -111,6 +231,10 @@ export const {
   removeSection,
   removeLastSection,
   resetResume,
+  addItem,
+  removeItem,
+  updateItem,
+  reorderItems,
 } = resumeSlice.actions;
 
 export const resumeReducer = resumeSlice.reducer;

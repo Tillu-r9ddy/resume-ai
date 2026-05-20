@@ -1,14 +1,3 @@
-/* eslint-disable react-hooks/refs --
- * This file uses the canonical React Hook Form pattern:
- *     register('field', { onBlur: () => { skipNextSyncRef.current = true; ... } })
- * RHF's `register()` returns a ref-binding object meant to be spread onto an
- * input — that's the entire library design. The new react-hooks/refs lint
- * rule conservatively flags this as "passing a ref to a function during
- * render" because the onBlur callback transitively captures skipNextSyncRef.
- * Reading refs *inside event handlers* is explicitly allowed by React (see
- * https://react.dev/learn/referencing-values-with-refs#when-to-use-refs).
- * Per-file disable + this comment is cheaper than five inline disables.
- */
 /**
  * HeaderForm — RHF-bound editor for the singleton Header section.
  *
@@ -45,13 +34,12 @@
  *   our own dispatch. Undo/redo don't set the flag, so their store changes
  *   DO sync into the form. Clean.
  */
-import { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { HeaderSchema, type Header } from '../../schema/resume';
 import { selectHeader } from '../../store/selectors';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { updateHeader } from '../../store/resumeSlice';
+import { useReduxBoundForm } from '../../hooks/useReduxBoundForm';
 import { Field } from './Field';
 import { LinksFieldArray } from './LinksFieldArray';
 
@@ -83,42 +71,20 @@ function HeaderFormInner({
   header: Header;
   dispatch: ReturnType<typeof useAppDispatch>;
 }): React.JSX.Element {
-  const form = useForm<Header>({
+  // useReduxBoundForm owns the form + the bidirectional sync trick that
+  // used to live inline here. See hooks/useReduxBoundForm.ts for the why.
+  const { form, markPendingSelfUpdate } = useReduxBoundForm<Header>({
     resolver: zodResolver(HeaderSchema),
-    // Initial defaults from the store. Subsequent store changes flow in via
-    // the sync useEffect below — NOT via defaultValues (RHF only reads
-    // defaultValues on mount).
-    defaultValues: header,
-    // Validate on blur — matches our dispatch cadence so errors appear at
-    // the same moment the change reaches the store. No noisy onChange validation.
+    storeValue: header,
     mode: 'onBlur',
   });
-
-  /**
-   * Skip-next-sync ref. Set to true right before WE dispatch a store change;
-   * the useEffect below checks it and skips one round of form.reset() so our
-   * own action doesn't bounce back through the form and clear focus.
-   */
-  const skipNextSyncRef = useRef(false);
-
-  // ── Direction 2: store → form ─────────────────────────────────────────
-  useEffect(() => {
-    if (skipNextSyncRef.current) {
-      skipNextSyncRef.current = false;
-      return;
-    }
-    // External change (undo/redo/reset). Push the new values into the form.
-    // `reset` accepts the same shape as defaultValues; we pass the whole
-    // header so RHF updates every field, including the field-array entries.
-    form.reset(header);
-  }, [header, form]);
 
   // ── Direction 1: form → store, scoped to one field's blur ─────────────
   // Returns a handler we attach via register('field', { onBlur }).
   // We dispatch only the field that just blurred, not the whole header —
   // a smaller payload + a more meaningful action in the undo timeline.
   const commitField = (name: keyof Header) => () => {
-    skipNextSyncRef.current = true;
+    markPendingSelfUpdate();
     dispatch(updateHeader({ [name]: form.getValues(name) } as Partial<Header>));
   };
 
@@ -126,7 +92,7 @@ function HeaderFormInner({
   // field — we always commit the whole `links` array. Simpler and correct
   // (RHF's getValues('links') reflects the latest add/remove/edit state).
   const commitLinks = (): void => {
-    skipNextSyncRef.current = true;
+    markPendingSelfUpdate();
     dispatch(updateHeader({ links: form.getValues('links') }));
   };
 
