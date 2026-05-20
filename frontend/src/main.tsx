@@ -8,7 +8,10 @@
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import App from './App';
+import { store, persistor } from './store';
 import './index.css';
 
 /**
@@ -48,7 +51,27 @@ root.render(
    * Production build STRIPS this out → zero perf cost in prod.
    * NEVER remove this to silence double-renders; fix the offending effect instead.
    */
+  /**
+   * Provider + PersistGate — composition order matters:
+   *
+   *   <Provider>           ← gives the whole tree access to the Redux store
+   *     <PersistGate>      ← blocks render until localStorage is rehydrated
+   *       <App />          ← sees the *restored* state from its first render
+   *
+   * Why PersistGate instead of "render immediately"?
+   *   Without it, the user sees the seed resume for a frame, then their saved
+   *   resume swaps in — visually jarring, and any RHF default-values logic in
+   *   Phase 4b would lock onto the wrong values.
+   *
+   * `loading={null}` is fine here — localStorage reads are sync-ish and
+   * complete before the first paint on a warm cache. Phase 9 can swap in a
+   * branded splash screen if we ever go cold-cache.
+   */
   <StrictMode>
-    <App />
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <App />
+      </PersistGate>
+    </Provider>
   </StrictMode>,
 );
