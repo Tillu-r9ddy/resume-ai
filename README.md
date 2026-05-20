@@ -16,17 +16,17 @@ Every config file, every component, every commit message is annotated with a **W
 
 ## What you'll find here (by phase)
 
-| Phase | Topic                                                                               | Status         |
-| ----- | ----------------------------------------------------------------------------------- | -------------- |
-| 1     | Foundation — Vite + TS + tooling + parallel webpack lesson                          | ✅ in progress |
-| 2     | React Router, code splitting, Suspense, error boundaries                            | ⏳             |
-| 3     | State management tour (Zustand · RTK · TanStack Query · Jotai · Context done right) | ⏳             |
-| 4     | Forms with React Hook Form + Zod, field arrays, controlled vs uncontrolled          | ⏳             |
-| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ⏳             |
-| 6     | FastAPI + Ollama backend, SSE streaming, RAG, tool calling                          | ⏳             |
-| 7     | Concurrent React, optimistic updates, PDF generation                                | ⏳             |
-| 8     | Testing — Vitest · RTL · Playwright · Storybook · MSW                               | ⏳             |
-| 9     | CI/CD with GitHub Actions, Docker, open-source deploy                               | ⏳             |
+| Phase | Topic                                                                               | Status |
+| ----- | ----------------------------------------------------------------------------------- | ------ |
+| 1     | Foundation — Vite + TS + tooling + parallel webpack lesson                          | ✅     |
+| 2     | React Router, code splitting, Suspense, error boundaries, Tailwind v4 + Shell       | ✅     |
+| 3     | State management tour (Zustand · RTK · TanStack Query · Jotai · Context done right) | ⏳     |
+| 4     | Forms with React Hook Form + Zod, field arrays, controlled vs uncontrolled          | ⏳     |
+| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ⏳     |
+| 6     | FastAPI + Ollama backend, SSE streaming, RAG, tool calling                          | ⏳     |
+| 7     | Concurrent React, optimistic updates, PDF generation                                | ⏳     |
+| 8     | Testing — Vitest · RTL · Playwright · Storybook · MSW                               | ⏳     |
+| 9     | CI/CD with GitHub Actions, Docker, open-source deploy                               | ⏳     |
 
 Per-phase deep dives live in [`docs/`](./docs/).
 
@@ -52,7 +52,12 @@ Per-phase deep dives live in [`docs/`](./docs/).
 resume-ai/
 ├── frontend/          ← Vite + React + TypeScript app
 │   ├── src/
-│   ├── vite.config.ts     (active build config)
+│   │   ├── components/    (Shell, ErrorBoundary, ErrorFallback, RouteSkeleton, …)
+│   │   ├── routes/        (Home, Editor, Chat, NotFound — each a lazy chunk)
+│   │   ├── router.tsx     (createBrowserRouter — v7 data router)
+│   │   ├── App.tsx        (mounts <RouterProvider />)
+│   │   └── index.css      (Tailwind v4 entry + @theme tokens)
+│   ├── vite.config.ts     (active build config — react + tailwindcss plugins)
 │   ├── webpack.config.js  (LEARNING-ONLY, not used to build)
 │   ├── eslint.config.js
 │   └── README.md
