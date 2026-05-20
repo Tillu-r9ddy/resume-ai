@@ -55,6 +55,34 @@
 
 /*
  * ─────────────────────────────────────────────────────────────────────────────
+ * Light theme — token *overrides*, not a second utility set
+ * ─────────────────────────────────────────────────────────────────────────────
+ * The dark `@theme` block above defines every `--color-*` token. Tailwind v4
+ * generates utility classes (bg-canvas, text-ink, …) that reference those
+ * tokens via `var(--color-canvas)` etc.
+ *
+ * When ThemeManager sets `<html data-theme="light">`, this block kicks in and
+ * REASSIGNS the same custom properties to light values. Every utility class
+ * cascades automatically — no `dark:` variants, no class swapping per element.
+ *
+ * Why this approach over Tailwind's class-based `dark:` variants?
+ *   • Adding a third theme later is a new selector block, not a new variant.
+ *   • Non-Tailwind CSS (e.g. component libraries) also reacts to the swap.
+ *   • Components stay free of `dark:bg-x dark:text-y …` noise.
+ */
+[data-theme='light'] {
+  --color-canvas: #f7f7f9; /* page background */
+  --color-surface: #ffffff; /* cards / sidebar */
+  --color-surface-2: #eef0f4; /* hover / nested */
+  --color-border: #d9dde4;
+  --color-ink: #14181f; /* primary text */
+  --color-ink-muted: #5a6472; /* secondary text */
+  --color-accent: #1d4ed8; /* links / focus rings */
+  --color-accent-soft: #dbe7ff; /* accent backgrounds */
+}
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
  * Tiny base layer — only the things Preflight doesn't handle for us.
  * ─────────────────────────────────────────────────────────────────────────────
  * Resist adding more here. If a rule could be a utility class, prefer the
@@ -73,5 +101,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /*
+     * Smooth the swap between themes so the screen doesn't pop. Limit the
+     * transition to color properties — animating layout properties here
+     * would slow down EVERY style change in the app.
+     */
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out;
   }
 }

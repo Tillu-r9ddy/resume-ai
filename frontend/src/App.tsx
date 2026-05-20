@@ -1,5 +1,7 @@
 /**
- * App — root component. Phase 2 onward, its only job is to mount the router.
+ * App — root component. Phase 2 onward, its only job is to mount the router
+ * and any *root-level side-effect* components (theme manager, future toast
+ * provider, etc).
  *
  * Why so thin?
  *   Everything user-facing (layout, nav, error/suspense boundaries) lives
@@ -12,9 +14,15 @@
  */
 import { RouterProvider } from 'react-router';
 import { router } from './router';
+import { ThemeManager } from './components/ThemeManager';
 
 function App(): React.JSX.Element {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <ThemeManager />
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;
