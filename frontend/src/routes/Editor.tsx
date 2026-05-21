@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { addSection, removeLastSection, resetResume } from '../store/resumeSlice';
 import { SECTION_TYPES, type SectionType } from '../schema/resume';
 import { EditorLayout } from '../components/editor/EditorLayout';
+import { AutosaveIndicator } from '../components/editor/AutosaveIndicator';
 
 const ADDABLE_SECTIONS: readonly SectionType[] = SECTION_TYPES.filter(
   (t): t is Exclude<SectionType, 'header'> => t !== 'header',
@@ -45,7 +46,8 @@ export default function Editor(): React.JSX.Element {
             Phase 4b — the Header section is now a real form. Other sections arrive in Phase 4c.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <AutosaveIndicator />
           <button
             type="button"
             onClick={() => dispatch(UndoActions.undo())}

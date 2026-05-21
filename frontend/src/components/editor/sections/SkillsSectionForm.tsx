@@ -16,11 +16,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { SkillsItemSchema, type SkillsItem } from '../../../schema/resume';
 import { useAppDispatch } from '../../../store/hooks';
-import { addItem, removeItem, updateItem } from '../../../store/resumeSlice';
+import { addItem, removeItem, reorderItems, updateItem } from '../../../store/resumeSlice';
 import { useReduxBoundForm } from '../../../hooks/useReduxBoundForm';
 import { Field } from '../Field';
 import { ItemCard } from '../ItemCard';
 import { BulletsFieldArray } from '../BulletsFieldArray';
+import { SortableList } from '../SortableList';
 
 const SkillsFormSchema = z.object({
   items: z.array(SkillsItemSchema),
@@ -90,35 +91,41 @@ export function SkillsSectionForm({ sectionId, items }: SkillsSectionFormProps):
       {fields.length === 0 ? (
         <p className="text-sm text-ink-muted">No skill groups yet — click “+ Add group”.</p>
       ) : (
-        fields.map((field, index) => {
-          const itemId = items[index]?.id ?? field.id;
-          const itemErrors = errors.items?.[index];
-          return (
-            <ItemCard
-              key={field.id}
-              title={`Group ${index + 1}`}
-              onRemove={() => dispatch(removeItem({ sectionId, itemId }))}
-            >
-              <Field
-                label="Group name"
-                registration={register(`items.${index}.group`, {
-                  onBlur: commitItemField(itemId, 'group', index),
-                })}
-                error={itemErrors?.group}
-                placeholder="Languages · Frameworks · Tools"
-              />
-              <BulletsFieldArray<SkillsFormValues>
-                control={control}
-                register={register}
-                errors={errors}
-                name={`items.${index}.items`}
-                label="Skills"
-                placeholder="TypeScript"
-                onCommit={commitItems(itemId, index)}
-              />
-            </ItemCard>
-          );
-        })
+        <SortableList
+          items={items}
+          onReorder={(itemIds) => dispatch(reorderItems({ sectionId, itemIds }))}
+          renderItem={(item, bindings) => {
+            const index = items.findIndex((it) => it.id === item.id);
+            if (index < 0) return null;
+            const itemId = item.id;
+            const itemErrors = errors.items?.[index];
+            return (
+              <ItemCard
+                title={`Group ${index + 1}`}
+                onRemove={() => dispatch(removeItem({ sectionId, itemId }))}
+                bindings={bindings}
+              >
+                <Field
+                  label="Group name"
+                  registration={register(`items.${index}.group`, {
+                    onBlur: commitItemField(itemId, 'group', index),
+                  })}
+                  error={itemErrors?.group}
+                  placeholder="Languages · Frameworks · Tools"
+                />
+                <BulletsFieldArray<SkillsFormValues>
+                  control={control}
+                  register={register}
+                  errors={errors}
+                  name={`items.${index}.items`}
+                  label="Skills"
+                  placeholder="TypeScript"
+                  onCommit={commitItems(itemId, index)}
+                />
+              </ItemCard>
+            );
+          }}
+        />
       )}
 
       <button

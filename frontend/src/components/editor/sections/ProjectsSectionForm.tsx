@@ -9,11 +9,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ProjectItemSchema, type ProjectItem } from '../../../schema/resume';
 import { useAppDispatch } from '../../../store/hooks';
-import { addItem, removeItem, updateItem } from '../../../store/resumeSlice';
+import { addItem, removeItem, reorderItems, updateItem } from '../../../store/resumeSlice';
 import { useReduxBoundForm } from '../../../hooks/useReduxBoundForm';
 import { Field } from '../Field';
 import { ItemCard } from '../ItemCard';
 import { BulletsFieldArray } from '../BulletsFieldArray';
+import { SortableList } from '../SortableList';
 
 const ProjectsFormSchema = z.object({
   items: z.array(ProjectItemSchema),
@@ -86,52 +87,58 @@ export function ProjectsSectionForm({
       {fields.length === 0 ? (
         <p className="text-sm text-ink-muted">No projects yet — click “+ Add project”.</p>
       ) : (
-        fields.map((field, index) => {
-          const itemId = items[index]?.id ?? field.id;
-          const itemErrors = errors.items?.[index];
-          return (
-            <ItemCard
-              key={field.id}
-              title={`Project ${index + 1}`}
-              onRemove={() => dispatch(removeItem({ sectionId, itemId }))}
-            >
-              <Field
-                label="Name"
-                registration={register(`items.${index}.name`, {
-                  onBlur: commitItemField(itemId, 'name', index),
-                })}
-                error={itemErrors?.name}
-                placeholder="Resume-AI"
-              />
-              <Field
-                label="Summary"
-                registration={register(`items.${index}.summary`, {
-                  onBlur: commitItemField(itemId, 'summary', index),
-                })}
-                error={itemErrors?.summary}
-                placeholder="One-line description of what it does and why it matters."
-              />
-              <Field
-                label="Link (optional)"
-                registration={register(`items.${index}.link`, {
-                  onBlur: commitItemField(itemId, 'link', index),
-                })}
-                error={itemErrors?.link}
-                placeholder="https://github.com/you/resume-ai"
-                type="url"
-              />
-              <BulletsFieldArray<ProjectsFormValues>
-                control={control}
-                register={register}
-                errors={errors}
-                name={`items.${index}.bullets`}
-                label="Bullets"
-                placeholder="Shipped Phase 4 in a weekend."
-                onCommit={commitBullets(itemId, index)}
-              />
-            </ItemCard>
-          );
-        })
+        <SortableList
+          items={items}
+          onReorder={(itemIds) => dispatch(reorderItems({ sectionId, itemIds }))}
+          renderItem={(item, bindings) => {
+            const index = items.findIndex((it) => it.id === item.id);
+            if (index < 0) return null;
+            const itemId = item.id;
+            const itemErrors = errors.items?.[index];
+            return (
+              <ItemCard
+                title={`Project ${index + 1}`}
+                onRemove={() => dispatch(removeItem({ sectionId, itemId }))}
+                bindings={bindings}
+              >
+                <Field
+                  label="Name"
+                  registration={register(`items.${index}.name`, {
+                    onBlur: commitItemField(itemId, 'name', index),
+                  })}
+                  error={itemErrors?.name}
+                  placeholder="Resume-AI"
+                />
+                <Field
+                  label="Summary"
+                  registration={register(`items.${index}.summary`, {
+                    onBlur: commitItemField(itemId, 'summary', index),
+                  })}
+                  error={itemErrors?.summary}
+                  placeholder="One-line description of what it does and why it matters."
+                />
+                <Field
+                  label="Link (optional)"
+                  registration={register(`items.${index}.link`, {
+                    onBlur: commitItemField(itemId, 'link', index),
+                  })}
+                  error={itemErrors?.link}
+                  placeholder="https://github.com/you/resume-ai"
+                  type="url"
+                />
+                <BulletsFieldArray<ProjectsFormValues>
+                  control={control}
+                  register={register}
+                  errors={errors}
+                  name={`items.${index}.bullets`}
+                  label="Bullets"
+                  placeholder="Shipped Phase 4 in a weekend."
+                  onCommit={commitBullets(itemId, index)}
+                />
+              </ItemCard>
+            );
+          }}
+        />
       )}
 
       <button

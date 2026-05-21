@@ -35,11 +35,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ExperienceItemSchema, type ExperienceItem } from '../../../schema/resume';
 import { useAppDispatch } from '../../../store/hooks';
-import { addItem, removeItem, updateItem } from '../../../store/resumeSlice';
+import { addItem, removeItem, reorderItems, updateItem } from '../../../store/resumeSlice';
 import { useReduxBoundForm } from '../../../hooks/useReduxBoundForm';
 import { Field } from '../Field';
 import { ItemCard } from '../ItemCard';
 import { BulletsFieldArray } from '../BulletsFieldArray';
+import { SortableList } from '../SortableList';
 
 const ExperienceFormSchema = z.object({
   items: z.array(ExperienceItemSchema),
@@ -122,86 +123,100 @@ export function ExperienceSectionForm({
       {fields.length === 0 ? (
         <p className="text-sm text-ink-muted">No jobs yet — click “+ Add job” to start.</p>
       ) : (
-        fields.map((field, index) => {
-          const itemId = items[index]?.id ?? field.id;
-          const itemErrors = errors.items?.[index];
-          const isCurrent = form.getValues(`items.${index}.end`) === null;
-          return (
-            <ItemCard
-              key={field.id}
-              title={`Job ${index + 1}`}
-              badge={isCurrent ? 'current' : undefined}
-              onRemove={() => dispatch(removeItem({ sectionId, itemId }))}
-            >
-              <div className="grid grid-cols-2 gap-3">
+        /*
+         * Pass `items` (store data) as the sortable source so dnd-kit
+         * tracks our entity ids. We look up the matching `index` inside
+         * renderItem; that index is what RHF's register paths need.
+         * The order of `items` and `fields` agrees at render time because
+         * useReduxBoundForm.reset() rebuilds fields whenever the store
+         * order changes — and there's no skip flag for reorder dispatches.
+         */
+        <SortableList
+          items={items}
+          onReorder={(itemIds) => dispatch(reorderItems({ sectionId, itemIds }))}
+          renderItem={(item, bindings) => {
+            const index = items.findIndex((it) => it.id === item.id);
+            if (index < 0) return null;
+            const itemId = item.id;
+            const itemErrors = errors.items?.[index];
+            const isCurrent = form.getValues(`items.${index}.end`) === null;
+            return (
+              <ItemCard
+                title={`Job ${index + 1}`}
+                badge={isCurrent ? 'current' : undefined}
+                onRemove={() => dispatch(removeItem({ sectionId, itemId }))}
+                bindings={bindings}
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="Company"
+                    registration={register(`items.${index}.company`, {
+                      onBlur: commitItemField(itemId, 'company', index),
+                    })}
+                    error={itemErrors?.company}
+                    placeholder="Analytical Engine Ltd"
+                  />
+                  <Field
+                    label="Title"
+                    registration={register(`items.${index}.title`, {
+                      onBlur: commitItemField(itemId, 'title', index),
+                    })}
+                    error={itemErrors?.title}
+                    placeholder="Lead Programmer"
+                  />
+                </div>
                 <Field
-                  label="Company"
-                  registration={register(`items.${index}.company`, {
-                    onBlur: commitItemField(itemId, 'company', index),
+                  label="Location"
+                  registration={register(`items.${index}.location`, {
+                    onBlur: commitItemField(itemId, 'location', index),
                   })}
-                  error={itemErrors?.company}
-                  placeholder="Analytical Engine Ltd"
+                  error={itemErrors?.location}
+                  placeholder="London, UK"
                 />
-                <Field
-                  label="Title"
-                  registration={register(`items.${index}.title`, {
-                    onBlur: commitItemField(itemId, 'title', index),
-                  })}
-                  error={itemErrors?.title}
-                  placeholder="Lead Programmer"
-                />
-              </div>
-              <Field
-                label="Location"
-                registration={register(`items.${index}.location`, {
-                  onBlur: commitItemField(itemId, 'location', index),
-                })}
-                error={itemErrors?.location}
-                placeholder="London, UK"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <Field
-                  label="Start (YYYY-MM)"
-                  registration={register(`items.${index}.start`, {
-                    onBlur: commitItemField(itemId, 'start', index),
-                  })}
-                  error={itemErrors?.start}
-                  placeholder="2024-01"
-                />
-                <Field
-                  label="End (YYYY-MM, blank = present)"
-                  registration={register(`items.${index}.end`, {
-                    onBlur: () => {
-                      // Treat empty string as the "Present" sentinel (null).
-                      const raw = form.getValues(`items.${index}.end`);
-                      const next: ExperienceItem['end'] = raw === '' || raw === null ? null : raw;
-                      markPendingSelfUpdate();
-                      dispatch(
-                        updateItem({
-                          sectionId,
-                          itemId,
-                          patch: { end: next },
-                        }),
-                      );
-                    },
-                  })}
-                  error={itemErrors?.end}
-                  placeholder="2025-06"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="Start (YYYY-MM)"
+                    registration={register(`items.${index}.start`, {
+                      onBlur: commitItemField(itemId, 'start', index),
+                    })}
+                    error={itemErrors?.start}
+                    placeholder="2024-01"
+                  />
+                  <Field
+                    label="End (YYYY-MM, blank = present)"
+                    registration={register(`items.${index}.end`, {
+                      onBlur: () => {
+                        // Treat empty string as the "Present" sentinel (null).
+                        const raw = form.getValues(`items.${index}.end`);
+                        const next: ExperienceItem['end'] = raw === '' || raw === null ? null : raw;
+                        markPendingSelfUpdate();
+                        dispatch(
+                          updateItem({
+                            sectionId,
+                            itemId,
+                            patch: { end: next },
+                          }),
+                        );
+                      },
+                    })}
+                    error={itemErrors?.end}
+                    placeholder="2025-06"
+                  />
+                </div>
 
-              <BulletsFieldArray<ExperienceFormValues>
-                control={control}
-                register={register}
-                errors={errors}
-                name={`items.${index}.bullets`}
-                label="Bullets"
-                placeholder="Wrote the first algorithm intended to be processed by a machine."
-                onCommit={commitBullets(itemId, index)}
-              />
-            </ItemCard>
-          );
-        })
+                <BulletsFieldArray<ExperienceFormValues>
+                  control={control}
+                  register={register}
+                  errors={errors}
+                  name={`items.${index}.bullets`}
+                  label="Bullets"
+                  placeholder="Wrote the first algorithm intended to be processed by a machine."
+                  onCommit={commitBullets(itemId, index)}
+                />
+              </ItemCard>
+            );
+          }}
+        />
       )}
 
       <button

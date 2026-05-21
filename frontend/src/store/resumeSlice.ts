@@ -221,6 +221,28 @@ const resumeSlice = createSlice({
       for (const leftover of byId.values()) reordered.push(leftover as never);
       section.items = reordered as never;
     },
+
+    /**
+     * Reorder the document's sections to the order given by `sectionIds`.
+     * Same shape as reorderItems, but at the section level — driven by
+     * dnd-kit's onDragEnd from Phase 4d.
+     *
+     * Defensive: ids in the array that don't match any section are dropped;
+     * sections in the document but missing from the array stay at the end.
+     */
+    reorderSections: (state, action: PayloadAction<{ sectionIds: string[] }>) => {
+      const byId = new Map(state.sections.map((s) => [s.id, s]));
+      const reordered: typeof state.sections = [];
+      for (const id of action.payload.sectionIds) {
+        const section = byId.get(id);
+        if (section) {
+          reordered.push(section);
+          byId.delete(id);
+        }
+      }
+      for (const leftover of byId.values()) reordered.push(leftover);
+      state.sections = reordered;
+    },
   },
 });
 
@@ -235,6 +257,7 @@ export const {
   removeItem,
   updateItem,
   reorderItems,
+  reorderSections,
 } = resumeSlice.actions;
 
 export const resumeReducer = resumeSlice.reducer;
