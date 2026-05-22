@@ -3,11 +3,16 @@
  *
  * ATS-friendly: plain semantic HTML, no icons or stylistic chrome that
  * resume parsers struggle with. The visual hierarchy is purely typographic.
+ *
+ * memo-wrapped: see HeaderPreview for the rationale — Immer keeps `items`
+ * referentially stable when the change is in some other section, so shallow
+ * equality skips this whole subtree on those keystrokes.
  */
+import { memo } from 'react';
 import type { ExperienceItem } from '../../schema/resume';
 import { formatYearMonthRange } from './formatYearMonth';
 
-export function ExperiencePreview({ items }: { items: ExperienceItem[] }): React.JSX.Element {
+function ExperiencePreviewInner({ items }: { items: ExperienceItem[] }): React.JSX.Element {
   return (
     <section>
       <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Experience</h2>
@@ -48,3 +53,5 @@ export function ExperiencePreview({ items }: { items: ExperienceItem[] }): React
     </section>
   );
 }
+
+export const ExperiencePreview = memo(ExperiencePreviewInner);

@@ -42,6 +42,7 @@ import { Preview } from '../preview/Preview';
 import { SortableList, type SortableRenderProps } from './SortableList';
 import { SortableHandle } from './SortableHandle';
 import { SectionManager } from './SectionManager';
+import { RenderProfiler } from '../dev/RenderProfiler';
 
 const SECTION_TITLE: Record<Section['type'], string> = {
   header: 'Header',
@@ -58,35 +59,39 @@ export function EditorLayout(): React.JSX.Element {
   return (
     <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
       {/* ── Form pane ──────────────────────────────────────────────────── */}
-      <div aria-label="Resume editor" className="flex flex-col gap-4">
-        {sections.length === 0 ? (
-          <p className="text-sm text-ink-muted">
-            This resume has no sections yet. Use “+ Add section” below.
-          </p>
-        ) : (
-          <SortableList
-            items={sections}
-            onReorder={(ids) => dispatch(reorderSections({ sectionIds: ids }))}
-            renderItem={(section, bindings) => (
-              <SectionCard
-                section={section}
-                bindings={bindings}
-                onRemove={() => dispatch(removeSection({ id: section.id }))}
-              />
-            )}
-          />
-        )}
+      <RenderProfiler id="FormPane">
+        <div aria-label="Resume editor" className="flex flex-col gap-4">
+          {sections.length === 0 ? (
+            <p className="text-sm text-ink-muted">
+              This resume has no sections yet. Use “+ Add section” below.
+            </p>
+          ) : (
+            <SortableList
+              items={sections}
+              onReorder={(ids) => dispatch(reorderSections({ sectionIds: ids }))}
+              renderItem={(section, bindings) => (
+                <SectionCard
+                  section={section}
+                  bindings={bindings}
+                  onRemove={() => dispatch(removeSection({ id: section.id }))}
+                />
+              )}
+            />
+          )}
 
-        <SectionManager />
-      </div>
+          <SectionManager />
+        </div>
+      </RenderProfiler>
 
       {/* ── Preview pane ───────────────────────────────────────────────── */}
-      <section aria-label="Resume preview" className="lg:sticky lg:top-6 lg:self-start">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">
-          Preview
-        </h2>
-        <Preview />
-      </section>
+      <RenderProfiler id="PreviewPane">
+        <section aria-label="Resume preview" className="lg:sticky lg:top-6 lg:self-start">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">
+            Preview
+          </h2>
+          <Preview />
+        </section>
+      </RenderProfiler>
     </div>
   );
 }

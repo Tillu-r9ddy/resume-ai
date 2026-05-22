@@ -11,10 +11,11 @@
 import { useState } from 'react';
 import { ActionCreators as UndoActions } from 'redux-undo';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addSection, removeLastSection, resetResume } from '../store/resumeSlice';
+import { addSection, removeLastSection, resetResume, setResume } from '../store/resumeSlice';
 import { SECTION_TYPES, type SectionType } from '../schema/resume';
 import { EditorLayout } from '../components/editor/EditorLayout';
 import { AutosaveIndicator } from '../components/editor/AutosaveIndicator';
+import { benchmarkResume } from '../store/benchmarkResume';
 
 const ADDABLE_SECTIONS: readonly SectionType[] = SECTION_TYPES.filter(
   (t): t is Exclude<SectionType, 'header'> => t !== 'header',
@@ -111,6 +112,16 @@ export default function Editor(): React.JSX.Element {
               >
                 ↺ Reset to seed
               </button>
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  onClick={() => dispatch(setResume(benchmarkResume()))}
+                  className="rounded-md border border-border bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink hover:bg-accent-soft"
+                  title="Load the Phase 5 benchmark resume (~15 jobs, ~10 projects)"
+                >
+                  ⚡ Load benchmark
+                </button>
+              )}
             </div>
             <p className="mt-2 text-xs text-ink-muted">
               sections: {sectionCount} · past: {pastCount} · future: {futureCount}

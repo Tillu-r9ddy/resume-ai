@@ -1,10 +1,13 @@
 /**
  * EducationPreview — read-only render of an Education section.
+ *
+ * memo-wrapped (Phase 5) — see HeaderPreview for the structural-sharing rationale.
  */
+import { memo } from 'react';
 import type { EducationItem } from '../../schema/resume';
 import { formatYearMonthRange } from './formatYearMonth';
 
-export function EducationPreview({ items }: { items: EducationItem[] }): React.JSX.Element {
+function EducationPreviewInner({ items }: { items: EducationItem[] }): React.JSX.Element {
   return (
     <section>
       <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Education</h2>
@@ -29,3 +32,5 @@ export function EducationPreview({ items }: { items: EducationItem[] }): React.J
     </section>
   );
 }
+
+export const EducationPreview = memo(EducationPreviewInner);

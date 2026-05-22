@@ -12,14 +12,23 @@
  *   Each section type has its own visual structure (Experience = role +
  *   dates + bullets; Skills = grouped pills). Splitting per type keeps each
  *   renderer focused and lets us test/style them independently.
+ *
+ * Why React.memo (Phase 5):
+ *   The Preview re-renders on every keystroke because the sections array
+ *   reference changes (Immer rebuilds the path to the edited node). But
+ *   Immer's structural sharing keeps the `header` reference stable when the
+ *   change is in some OTHER section. React.memo's default shallow equality
+ *   then skips this entire subtree — turns N preview re-renders per keystroke
+ *   into 1 (only the section that actually changed re-renders).
  */
+import { memo } from 'react';
 import type { Header } from '../../schema/resume';
 
 interface HeaderPreviewProps {
   header: Header;
 }
 
-export function HeaderPreview({ header }: HeaderPreviewProps): React.JSX.Element {
+function HeaderPreviewInner({ header }: HeaderPreviewProps): React.JSX.Element {
   // Build the contact line as an array first so we can join with a separator
   // only when there's an actual value (no trailing "·" for missing fields).
   const contactPieces = [header.email, header.phone, header.location].filter(
@@ -63,3 +72,5 @@ export function HeaderPreview({ header }: HeaderPreviewProps): React.JSX.Element
     </header>
   );
 }
+
+export const HeaderPreview = memo(HeaderPreviewInner);

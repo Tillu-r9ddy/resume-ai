@@ -1,7 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'node:path';
+
+// ANALYZE=1 npm run build -w frontend → emits dist/stats.html with a treemap
+// of the bundle. Off by default so normal builds stay fast and don't open
+// browser tabs in CI. Phase 5 baseline / after numbers live in
+// docs/05-phase-performance.md.
+const ANALYZE = process.env.ANALYZE === '1';
 
 /**
  * Vite configuration.
@@ -48,6 +55,22 @@ export default defineConfig({
      *   • Auto content detection (no `content: [...]` array)
      */
     tailwindcss(),
+
+    /**
+     * Bundle visualizer — only added when ANALYZE=1. Emits dist/stats.html
+     * with treemap + gzip + brotli sizes per module. Opens automatically.
+     */
+    ...(ANALYZE
+      ? [
+          visualizer({
+            filename: 'dist/stats.html',
+            template: 'treemap',
+            gzipSize: true,
+            brotliSize: true,
+            open: true,
+          }),
+        ]
+      : []),
   ],
 
   resolve: {
@@ -96,12 +119,41 @@ export default defineConfig({
     sourcemap: true,
     target: 'es2022',
     /**
-     * Rollup output options — we'll customize splitting in Phase 5.
-     * For now, Vite's auto-splitting (route-level + vendor) is fine.
+     * Rollup output options — Phase 5 vendor split.
+     *
+     * Default Vite chunking puts every node_modules dep into one giant
+     * `vendor` chunk that all routes pay for upfront. Splitting it lets the
+     * Home and Chat routes skip the editor-only families (react-hook-form,
+     * zod, @dnd-kit) until the user navigates to /editor — those families
+     * still ship as separate cache-friendly chunks instead of being bundled
+     * into the Editor chunk.
+     *
+     * Buckets are intentionally coarse: each group is one logical "library
+     * family" that ships and upgrades together. Finer-grained splitting
+     * (one chunk per package) increases waterfall depth without buying
+     * meaningful cache wins because the packages always change together.
      */
     rollupOptions: {
       output: {
-        // Phase 5 will add manualChunks() for vendor split & per-feature chunks.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('react-hook-form') || id.includes('@hookform')) return 'forms';
+          if (id.includes('/zod/') || id.endsWith('/zod')) return 'forms';
+          if (id.includes('@dnd-kit')) return 'dnd';
+          if (id.includes('@reduxjs/toolkit') || id.includes('react-redux')) return 'state';
+          if (
+            id.includes('/redux-undo') ||
+            id.includes('/redux-persist') ||
+            id.includes('/redux/')
+          ) {
+            return 'state';
+          }
+          if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('react-router')) {
+            return 'react';
+          }
+          // Everything else stays in the default vendor bucket.
+          return undefined;
+        },
       },
     },
   },

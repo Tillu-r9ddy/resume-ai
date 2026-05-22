@@ -1,9 +1,12 @@
 /**
  * ProjectsPreview — read-only render of a Projects section.
+ *
+ * memo-wrapped (Phase 5) — see HeaderPreview for the structural-sharing rationale.
  */
+import { memo } from 'react';
 import type { ProjectItem } from '../../schema/resume';
 
-export function ProjectsPreview({ items }: { items: ProjectItem[] }): React.JSX.Element {
+function ProjectsPreviewInner({ items }: { items: ProjectItem[] }): React.JSX.Element {
   return (
     <section>
       <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Projects</h2>
@@ -46,3 +49,5 @@ export function ProjectsPreview({ items }: { items: ProjectItem[] }): React.JSX.
     </section>
   );
 }
+
+export const ProjectsPreview = memo(ProjectsPreviewInner);

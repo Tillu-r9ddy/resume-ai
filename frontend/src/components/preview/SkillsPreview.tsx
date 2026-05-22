@@ -4,10 +4,13 @@
  * Each group is rendered as "Group: skill, skill, skill" — compact and
  * ATS-parser-friendly. Avoid pill / badge layouts that don't translate
  * well to plain-text resume parsers.
+ *
+ * memo-wrapped (Phase 5) — see HeaderPreview for the structural-sharing rationale.
  */
+import { memo } from 'react';
 import type { SkillsItem } from '../../schema/resume';
 
-export function SkillsPreview({ items }: { items: SkillsItem[] }): React.JSX.Element {
+function SkillsPreviewInner({ items }: { items: SkillsItem[] }): React.JSX.Element {
   return (
     <section>
       <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Skills</h2>
@@ -28,3 +31,5 @@ export function SkillsPreview({ items }: { items: SkillsItem[] }): React.JSX.Ele
     </section>
   );
 }
+
+export const SkillsPreview = memo(SkillsPreviewInner);
