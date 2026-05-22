@@ -1,0 +1,100 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# backend/pyproject.toml — single source of truth for project metadata,
+# runtime + dev dependencies, and tool configuration.
+#
+# WHY pyproject.toml (PEP 621) and not requirements.txt or setup.py?
+#   • PEP 621 is the modern standard; one file replaces setup.py + setup.cfg +
+#     requirements.txt + requirements-dev.txt. Less drift.
+#   • Works with every modern installer: pip, uv, hatch, poetry, pdm.
+#   • Tool configs (ruff, pytest, mypy) live in the same file under
+#     [tool.<name>] tables → discoverable in one place.
+#   • The build-system table makes the project installable as a wheel later
+#     without rewiring; useful when we package the backend in a Docker image.
+#
+# WHY no Poetry / PDM lockfile yet?
+#   We aren't pinning a dep resolver yet — Phase 6a is intentionally minimal.
+#   When the runtime surface grows (Phase 6b adds SQLAlchemy + Alembic) we'll
+#   add a uv.lock (uv is the 2026 default for new Python projects: 10–100×
+#   faster than pip for resolves + installs, drop-in for the pip workflow).
+# ──────────────────────────────────────────────────────────────────────────────
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "resume-ai-backend"
+version = "0.1.0"
+description = "FastAPI service for resume-ai — Phase 6a scaffolding."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+authors = [{ name = "Tilak Kumar Vasa", email = "vasatilakkumar24@gmail.com" }]
+
+# Runtime dependencies — kept lean. Each line is a service we'd actually wire
+# up later; speculative deps make installs slow and supply-chain audits noisy.
+dependencies = [
+    # Web framework + ASGI server.
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    # Data validation / settings.
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+]
+
+[project.optional-dependencies]
+# Dev-only deps. Install with `pip install -e ".[dev]"` from inside backend/.
+dev = [
+    "ruff>=0.7.0",      # lint + format (replaces flake8 + black + isort)
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",    # FastAPI's TestClient is built on httpx
+]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Tool configuration
+# ──────────────────────────────────────────────────────────────────────────────
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# ── ruff ──────────────────────────────────────────────────────────────────────
+# WHY ruff over flake8 + black + isort?
+#   One tool replaces three. Written in Rust → ~100× faster than the Python
+#   equivalents on large repos, so it stays usable on the pre-commit path.
+#   Defaults are sensible; we enable a few extra rule families below.
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [".venv", "venv", "dist", "build"]
+
+[tool.ruff.lint]
+# Enable rule families:
+#   E,W,F  → pyflakes + pycodestyle (the flake8 core)
+#   I      → import sorting (replaces isort)
+#   B      → flake8-bugbear (likely-bugs catcher)
+#   UP     → pyupgrade (modernise syntax)
+#   N      → pep8-naming
+#   S      → flake8-bandit (basic security checks)
+#   T20    → flake8-print (catch stray print() calls)
+select = ["E", "W", "F", "I", "B", "UP", "N", "S", "T20"]
+# S101: allow `assert` in tests (pytest uses it).
+# S104: allow binding to 0.0.0.0 in dev; we'll lock down per-env in Phase 6b.
+ignore = ["S101", "S104"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests routinely import unused fixtures and use assert — silence those rules
+# only inside tests/, not project-wide.
+"tests/**/*.py" = ["S101", "S105", "S106"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ── pytest ────────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+# Default to asyncio mode "auto" so we can write `async def test_...` without
+# decorating every test. The httpx-based TestClient is sync, but we'll have
+# real async endpoints once the DB lands.
+asyncio_mode = "auto"

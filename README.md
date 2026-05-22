@@ -22,8 +22,8 @@ Every config file, every component, every commit message is annotated with a **W
 | 2     | React Router, code splitting, Suspense, error boundaries, Tailwind v4 + Shell       | ✅                                                 |
 | 3     | State management tour (Zustand · RTK · TanStack Query · Jotai · Context done right) | 🟡 3a Zustand ✅ · 3b RTK ✅ (in 4a)               |
 | 4     | Forms with React Hook Form + Zod, field arrays, controlled vs uncontrolled          | ✅ 4a store · 4b header · 4c sections · 4d reorder |
-| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ⏳                                                 |
-| 6     | FastAPI + Ollama backend, SSE streaming, RAG, tool calling                          | ⏳                                                 |
+| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ✅                                                 |
+| 6     | FastAPI + Ollama backend, SSE streaming, RAG, tool calling                          | 🟡 6a scaffold ✅                                  |
 | 7     | Concurrent React, optimistic updates, PDF generation                                | ⏳                                                 |
 | 8     | Testing — Vitest · RTL · Playwright · Storybook · MSW                               | ⏳                                                 |
 | 9     | CI/CD with GitHub Actions, Docker, open-source deploy                               | ⏳                                                 |
@@ -94,6 +94,22 @@ npm install
 npm run dev
 # → http://localhost:5173
 ```
+
+#### Backend (Phase 6a — scaffolding only)
+
+```powershell
+# from backend/
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1       # PowerShell
+# or:  source .venv/bin/activate    (bash/zsh)
+
+pip install -e ".[dev]"
+uvicorn app.main:app --reload --port 8000
+# → http://localhost:8000/api/health
+# → http://localhost:8000/docs    (Swagger UI)
+```
+
+See [`backend/README.md`](./backend/README.md) for details.
 
 ### Common scripts
 
