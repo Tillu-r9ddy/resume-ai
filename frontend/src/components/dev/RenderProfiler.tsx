@@ -30,6 +30,11 @@
  */
 import { Profiler, type ReactNode } from 'react';
 
+// Active in DEV (always) or when VITE_PROFILE=1 was set at build time. Both
+// values are statically inlined by Vite, so the prod build with VITE_PROFILE=0
+// tree-shakes the whole Profiler branch away.
+const PROFILER_ACTIVE = import.meta.env.DEV || import.meta.env.VITE_PROFILE === '1';
+
 type PerfRow = { commits: number; ms: number };
 
 declare global {
@@ -42,7 +47,7 @@ declare global {
   }
 }
 
-if (import.meta.env.DEV && typeof window !== 'undefined' && !window.__perf) {
+if (PROFILER_ACTIVE && typeof window !== 'undefined' && !window.__perf) {
   const rows: Record<string, PerfRow> = {};
   window.__perf = {
     rows,
@@ -76,7 +81,7 @@ export function RenderProfiler({
   id: string;
   children: ReactNode;
 }): React.JSX.Element {
-  if (!import.meta.env.DEV) return <>{children}</>;
+  if (!PROFILER_ACTIVE) return <>{children}</>;
   return (
     <Profiler
       id={id}

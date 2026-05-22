@@ -10,6 +10,14 @@ import path from 'node:path';
 // docs/05-phase-performance.md.
 const ANALYZE = process.env.ANALYZE === '1';
 
+// VITE_PROFILE=1 npm run build -w frontend → swap react-dom for its profiling
+// build so React's <Profiler> onRender callback fires in production builds.
+// Off by default — adds ~3 kB gz and a small runtime cost. Use it for the
+// dev-vs-prod comparison loop documented in docs/05-phase-performance.md,
+// then unset for normal builds. The matching client-side gate lives in
+// src/components/dev/RenderProfiler.tsx.
+const PROFILE = process.env.VITE_PROFILE === '1';
+
 /**
  * Vite configuration.
  *
@@ -74,7 +82,7 @@ export default defineConfig({
   ],
 
   resolve: {
-    alias: {
+    alias: [
       /**
        * Path alias: `@/foo` → `<frontend>/src/foo`
        *
@@ -86,8 +94,17 @@ export default defineConfig({
        * Vite resolves at runtime, TS resolves at type-check time. If they drift,
        * your editor shows red squiggles but `npm run dev` still works (or vice versa).
        */
-      '@': path.resolve(__dirname, './src'),
-    },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+
+      /**
+       * When VITE_PROFILE=1, swap react-dom for react-dom/profiling. The default
+       * production React strips Profiler instrumentation, so onRender silently
+       * never fires. The profiling build keeps the instrumentation — slightly
+       * larger and slightly slower, but actually measurable. Exact-match regex
+       * so we don't accidentally redirect `react-dom/client` or `react-dom/server`.
+       */
+      ...(PROFILE ? [{ find: /^react-dom$/, replacement: 'react-dom/profiling' }] : []),
+    ],
   },
 
   server: {
