@@ -9,19 +9,9 @@
  * and left alone (could be another dev server you care about).
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { createServer } from 'node:net';
 
 const PORT = Number(process.argv[2] ?? 5173);
 const isWindows = process.platform === 'win32';
-
-function portFree(port) {
-  return new Promise((resolve) => {
-    const srv = createServer();
-    srv.once('error', () => resolve(false));
-    srv.once('listening', () => srv.close(() => resolve(true)));
-    srv.listen(port, '0.0.0.0');
-  });
-}
 
 function pidsOnPort(port) {
   if (isWindows) {
@@ -53,13 +43,8 @@ function kill(pid) {
   else execFileSync('kill', ['-9', pid], { stdio: 'ignore' });
 }
 
-if (await portFree(PORT)) process.exit(0);
-
 const pids = pidsOnPort(PORT);
-if (pids.length === 0) {
-  console.warn(`[free-port] Port ${PORT} appears in use but no PID found — continuing.`);
-  process.exit(0);
-}
+if (pids.length === 0) process.exit(0);
 
 for (const pid of pids) {
   const name = processName(pid).toLowerCase();
