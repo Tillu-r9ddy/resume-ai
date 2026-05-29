@@ -11,9 +11,26 @@
  *   `_exhaustive: never` in the default branch guarantees that adding a
  *   new SectionType without updating this switch is a compile error.
  *
- * In Phase 7 the same tree will be the source for PDF generation — that's
- * why we keep it as pure HTML with no editor-only chrome.
+ * Phase 7 — uses the same tree for PDF (see routes/Print.tsx). That's why
+ * we keep it as pure HTML with no editor-only chrome.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Why useDeferredValue around the sections?
+ * ─────────────────────────────────────────────────────────────────────────────
+ *   Typing in the form fires a Redux action → selectSections changes →
+ *   Preview re-renders the whole tree. On a large resume (benchmark loads
+ *   ~15 jobs + ~10 projects) the cumulative work is ~40 nodes per keystroke.
+ *
+ *   useDeferredValue tells React: "render the form update at high priority,
+ *   render the preview update at low priority — and if a newer update
+ *   arrives mid-render, throw the in-progress preview away." The form stays
+ *   instant; the preview catches up a frame or two later.
+ *
+ *   This is cheap because the section components are memoised (Phase 5).
+ *   Without the memo, deferring would still render the same total work —
+ *   just spread across more frames.
  */
+import { useDeferredValue } from 'react';
 import type { Section } from '../../schema/resume';
 import { useAppSelector } from '../../store/hooks';
 import { selectSections } from '../../store/selectors';
@@ -24,10 +41,18 @@ import { SkillsPreview } from './SkillsPreview';
 import { ProjectsPreview } from './ProjectsPreview';
 
 export function Preview(): React.JSX.Element {
-  const sections = useAppSelector(selectSections);
+  const liveSections = useAppSelector(selectSections);
+  // Deferred — React keeps the previous value during high-priority updates
+  // and renders the new one at low priority. See top-of-file rationale.
+  const sections = useDeferredValue(liveSections);
+  const isStale = sections !== liveSections;
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-8 shadow-sm">
+    <div
+      className="rounded-lg border border-border bg-surface p-8 shadow-sm transition-opacity"
+      style={{ opacity: isStale ? 0.6 : 1 }}
+      aria-busy={isStale}
+    >
       {sections.length === 0 ? (
         <p className="text-sm text-ink-muted">
           This resume has no sections yet. Add some from the debug panel below.

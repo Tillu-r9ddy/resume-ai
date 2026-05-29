@@ -111,3 +111,51 @@
       color 150ms ease-out;
   }
 }
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Print stylesheet — Phase 7
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * `@page` sets the actual paper size + margins. We pick US Letter at 0.5in
+ * margins — the most common resume format. Users on A4 will still get a
+ * usable page (Chrome will scale-to-fit by default in the print dialog).
+ *
+ * Why force a light palette in print?
+ *   The app's default dark theme renders white text on a near-black canvas.
+ *   Printing that wastes ink and looks wrong on paper. We unconditionally
+ *   override the design tokens for the print medium so the output is the
+ *   "resume on paper" the user expects, even if they're in dark mode on
+ *   screen.
+ *
+ * `.screen-only` is the escape hatch — slap it on any element that should
+ * NEVER appear on paper (instructional text, fallback nudges, etc.).
+ */
+@media print {
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  :root,
+  [data-theme='dark'],
+  [data-theme='light'] {
+    --color-canvas: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-2: #f4f4f6;
+    --color-border: #d0d4dc;
+    --color-ink: #14181f;
+    --color-ink-muted: #4a5260;
+    --color-accent: #1d4ed8;
+    --color-accent-soft: #e6efff;
+  }
+
+  body {
+    background: #ffffff;
+    color: #14181f;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+}

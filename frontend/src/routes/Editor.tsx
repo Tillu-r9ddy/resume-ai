@@ -67,6 +67,20 @@ export default function Editor(): React.JSX.Element {
           >
             ↷ Redo
           </button>
+          {/*
+           * "Download PDF" is just a link to /print. Opening in the same tab
+           * is intentional: window.print() can't reliably fire on a tab the
+           * user didn't navigate to (some browsers block it as a popup).
+           * The Print route navigates back to /editor after the dialog
+           * closes, so the round trip is seamless.
+           */}
+          <a
+            href="/print"
+            className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-canvas hover:opacity-90"
+            title="Open the print dialog — use Save as PDF"
+          >
+            ⤓ Download PDF
+          </a>
         </div>
       </header>
 

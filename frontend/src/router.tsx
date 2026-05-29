@@ -39,6 +39,19 @@ import { RouterErrorBoundary } from './components/RouterErrorBoundary';
 
 export const router = createBrowserRouter([
   {
+    /**
+     * `/print` mounts OUTSIDE Shell — no sidebar, no editor padding. The
+     * Print component renders only the preview and fires window.print(),
+     * which we then save to PDF via the browser's native dialog. See
+     * routes/Print.tsx for the rationale.
+     */
+    path: '/print',
+    lazy: async () => {
+      const { default: Component } = await import('./routes/Print');
+      return { Component };
+    },
+  },
+  {
     // The layout route — `path: '/'` + children that render in Shell's <Outlet />.
     path: '/',
     Component: Shell,
