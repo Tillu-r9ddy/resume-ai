@@ -16,17 +16,17 @@ Every config file, every component, every commit message is annotated with a **W
 
 ## What you'll find here (by phase)
 
-| Phase | Topic                                                                               | Status                                             |
-| ----- | ----------------------------------------------------------------------------------- | -------------------------------------------------- |
-| 1     | Foundation — Vite + TS + tooling + parallel webpack lesson                          | ✅                                                 |
-| 2     | React Router, code splitting, Suspense, error boundaries, Tailwind v4 + Shell       | ✅                                                 |
-| 3     | State management tour (Zustand · RTK · TanStack Query · Jotai · Context done right) | 🟡 3a Zustand ✅ · 3b RTK ✅ (in 4a)               |
-| 4     | Forms with React Hook Form + Zod, field arrays, controlled vs uncontrolled          | ✅ 4a store · 4b header · 4c sections · 4d reorder |
-| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ✅                                                 |
-| 6     | FastAPI + Ollama backend, SSE streaming, RAG, tool calling                          | 🟡 6a scaffold ✅                                  |
-| 7     | Concurrent React, optimistic updates, PDF generation                                | ⏳                                                 |
-| 8     | Testing — Vitest · RTL · Playwright · Storybook · MSW                               | ⏳                                                 |
-| 9     | CI/CD with GitHub Actions, Docker, open-source deploy                               | ⏳                                                 |
+| Phase | Topic                                                                               | Status                                                          |
+| ----- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 1     | Foundation — Vite + TS + tooling + parallel webpack lesson                          | ✅                                                              |
+| 2     | React Router, code splitting, Suspense, error boundaries, Tailwind v4 + Shell       | ✅                                                              |
+| 3     | State management tour (Zustand · RTK · TanStack Query · Jotai · Context done right) | 🟡 3a Zustand ✅ · 3b RTK ✅ (in 4a)                            |
+| 4     | Forms with React Hook Form + Zod, field arrays, controlled vs uncontrolled          | ✅ 4a store · 4b header · 4c sections · 4d reorder              |
+| 5     | Performance — memo, virtualization, Web Workers, bundle analysis                    | ✅                                                              |
+| 6     | FastAPI backend, SSE streaming, pluggable LLM provider                              | ✅ 6a scaffold · 6b CRUD · 6c streaming chat · 6d frontend wire |
+| 7     | Concurrent React + PDF export (browser-native, no PDF library)                      | ✅                                                              |
+| 8     | Testing — Vitest + RTL + MSW (smoke coverage)                                       | ✅                                                              |
+| 9     | CI/CD — GitHub Actions, multi-stage Dockerfiles, docker-compose                     | ✅                                                              |
 
 Per-phase deep dives live in [`docs/`](./docs/).
 
@@ -50,23 +50,41 @@ Per-phase deep dives live in [`docs/`](./docs/).
 
 ```
 resume-ai/
-├── frontend/          ← Vite + React + TypeScript app
+├── frontend/                  ← Vite + React + TypeScript app
 │   ├── src/
-│   │   ├── components/    (Shell, ThemeManager, ErrorBoundary, RouteSkeleton, …)
-│   │   ├── routes/        (Home, Editor, Chat, NotFound — each a lazy chunk)
-│   │   ├── schema/        (Zod schemas — resume document is the canonical example)
-│   │   ├── store/         (RTK store, slices, typed hooks — resume document)
-│   │   ├── stores/        (Zustand stores — UI state like sidebar + theme)
-│   │   ├── router.tsx     (createBrowserRouter — v7 data router)
-│   │   ├── App.tsx        (mounts <RouterProvider /> + <ThemeManager />)
-│   │   └── index.css      (Tailwind v4 entry + @theme tokens + light-theme overrides)
-│   ├── vite.config.ts     (active build config — react + tailwindcss plugins)
-│   ├── webpack.config.js  (LEARNING-ONLY, not used to build)
+│   │   ├── api/                  (fetch wrapper + streamChat SSE consumer — Phase 6d)
+│   │   ├── components/           (Shell, ThemeManager, editor/, preview/, dev/)
+│   │   ├── hooks/                (useBackendAutosave — Phase 6d)
+│   │   ├── routes/               (Home, Editor, Chat, Print, NotFound — lazy chunks)
+│   │   ├── schema/               (Zod schemas — resume document is the contract)
+│   │   ├── store/                (RTK store + slices, wrapped by redux-undo + redux-persist)
+│   │   ├── stores/               (Zustand stores — UI state like sidebar + theme)
+│   │   ├── test/                 (Vitest setup + MSW handlers — Phase 8)
+│   │   ├── router.tsx            (createBrowserRouter — v7 data router)
+│   │   ├── App.tsx               (mounts <RouterProvider /> + <ThemeManager />)
+│   │   └── index.css             (Tailwind v4 + @theme tokens + light theme + @media print)
+│   ├── vite.config.ts            (build + Vitest config — react + tailwindcss + jsdom)
+│   ├── webpack.config.js         (LEARNING-ONLY, not used to build)
+│   ├── nginx.conf                (prod nginx — SPA fallback + /api proxy + SSE-friendly)
+│   ├── Dockerfile                (multi-stage Node → nginx)
 │   ├── eslint.config.js
 │   └── README.md
-├── backend/           ← FastAPI + Ollama (Phase 6)
-├── docs/              ← Per-phase deep dives + decision records
-├── package.json       ← Workspace root, runs husky + commitlint
+├── backend/                    ← FastAPI service (Phase 6)
+│   ├── app/
+│   │   ├── main.py               (create_app() factory + CORS + router mount)
+│   │   ├── config.py             (pydantic-settings — env-driven config)
+│   │   ├── schemas/resume.py     (Pydantic mirror of frontend Zod — Phase 6b)
+│   │   ├── repositories/         (in-memory ResumeRepository — Phase 6b)
+│   │   ├── routers/              (resumes CRUD + chat SSE — Phase 6b/6c)
+│   │   └── services/llm.py       (ChatProvider ABC + Echo/Ollama impls — Phase 6c)
+│   ├── tests/                    (pytest — 21 tests across CRUD + chat + schema + health)
+│   ├── pyproject.toml            (deps + ruff + pytest config)
+│   ├── Dockerfile                (multi-stage Python, non-root user)
+│   └── README.md
+├── docs/                       ← Per-phase deep dives + decision records (01..09)
+├── docker-compose.yml          ← Local prod-shaped stack (+ opt-in Ollama profile)
+├── .github/workflows/          ← ci.yml (frontend) · backend.yml · docker.yml
+├── package.json                ← Workspace root, runs husky + commitlint
 ├── commitlint.config.js
 ├── .prettierrc.json
 ├── .editorconfig
@@ -113,16 +131,41 @@ See [`backend/README.md`](./backend/README.md) for details.
 
 ### Common scripts
 
-| Command                | What it does                        |
-| ---------------------- | ----------------------------------- |
-| `npm run dev`          | Vite dev server for `frontend/`     |
-| `npm run build`        | Production build → `frontend/dist/` |
-| `npm run preview`      | Serve the built dist locally        |
-| `npm run lint`         | ESLint across workspaces            |
-| `npm run lint:fix`     | ESLint with auto-fix                |
-| `npm run typecheck`    | TS type-check without emitting      |
-| `npm run format`       | Prettier write everything           |
-| `npm run format:check` | Prettier check (CI-friendly)        |
+| Command                             | What it does                                 |
+| ----------------------------------- | -------------------------------------------- |
+| `npm run dev`                       | Vite dev server for `frontend/`              |
+| `npm run build`                     | Production build → `frontend/dist/`          |
+| `npm run preview`                   | Serve the built dist locally                 |
+| `npm run lint`                      | ESLint across workspaces                     |
+| `npm run lint:fix`                  | ESLint with auto-fix                         |
+| `npm run typecheck`                 | TS type-check without emitting               |
+| `npm test -w frontend`              | Vitest run (one-shot, CI-style)              |
+| `npm run test:watch -w frontend`    | Vitest watch mode                            |
+| `npm run test:coverage -w frontend` | Vitest with v8 coverage report → `coverage/` |
+| `npm run format`                    | Prettier write everything                    |
+| `npm run format:check`              | Prettier check (CI-friendly)                 |
+
+### Running the full stack (Docker)
+
+For a prod-shaped local stack (nginx → FastAPI behind one origin):
+
+```bash
+docker compose up --build
+# → http://localhost:8080      (SPA, /api proxied to backend)
+# → http://localhost:8000/api/health   (backend, exposed for convenience)
+```
+
+Opt in to the local Ollama model (~4 GB download):
+
+```bash
+docker compose --profile ollama up --build
+```
+
+Tear down and drop the Ollama volume:
+
+```bash
+docker compose down -v
+```
 
 ### Commit conventions
 
