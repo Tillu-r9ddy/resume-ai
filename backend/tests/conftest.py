@@ -23,13 +23,30 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.repositories.resumes import ResumeRepository
+from app.routers.resumes import get_resume_repository
 
 
 @pytest.fixture
-def app() -> FastAPI:
-    """A fresh FastAPI app per test. Avoids state leaks between tests when
-    we add dependency overrides — each test gets its own override dict."""
-    return create_app()
+def repository() -> ResumeRepository:
+    """Fresh in-memory repository per test. Returned separately from `app`
+    so individual tests can seed it before invoking the client."""
+    return ResumeRepository()
+
+
+@pytest.fixture
+def app(repository: ResumeRepository) -> FastAPI:
+    """A fresh FastAPI app per test, with the in-memory repository wired
+    via dependency override.
+
+    Why override on the per-test app instead of mutating the production
+    singleton? Two tests running in parallel (pytest-xdist) would clobber
+    each other if they shared the singleton. Per-test override keeps the
+    suite trivially parallelisable.
+    """
+    app = create_app()
+    app.dependency_overrides[get_resume_repository] = lambda: repository
+    return app
 
 
 @pytest.fixture

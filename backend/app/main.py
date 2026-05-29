@@ -28,6 +28,8 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import Settings, get_settings
+from app.routers import chat as chat_router
+from app.routers import resumes as resumes_router
 
 # Annotated[Settings, Depends(get_settings)] is FastAPI's idiomatic dependency
 # injection shape. Routes that need settings just type-hint with this alias;
@@ -42,8 +44,8 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="resume-ai backend",
-        version="0.1.0",
-        description="Phase 6a scaffolding — health endpoint only. CRUD lands in 6b.",
+        version="0.2.0",
+        description="Phase 6b — resume CRUD + streaming chat (pluggable provider).",
     )
 
     # CORS — the frontend lives on a different origin in dev (Vite 5173) and
@@ -72,6 +74,11 @@ def create_app() -> FastAPI:
             "version": app.version,
             "env": settings.env_name,
         }
+
+    # Mount feature routers. Order is irrelevant for matching (FastAPI picks
+    # by path prefix) but kept resource-then-meta for readability.
+    app.include_router(resumes_router.router)
+    app.include_router(chat_router.router)
 
     return app
 

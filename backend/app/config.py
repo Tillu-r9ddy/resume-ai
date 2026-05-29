@@ -22,6 +22,7 @@ deliberate, reviewable change.
 """
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,6 +51,27 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(
         default=["http://localhost:5173", "http://127.0.0.1:5173"],
         description="Origins allowed to call the API",
+    )
+
+    # ── LLM provider config (Phase 6c) ──────────────────────────────────────
+    #
+    # Why default to "echo" instead of "ollama"?
+    #   The echo provider is dependency-free — `pytest`, `pip install`, and
+    #   `npm run dev` all work on a freshly-cloned machine with no Ollama
+    #   binary installed. The real provider is opt-in via env vars, so the
+    #   onboarding curve isn't "first set up a local 8B model just to see
+    #   the chat panel render."
+    llm_provider: Literal["echo", "ollama"] = Field(
+        default="echo",
+        description="Which chat provider /api/chat streams from",
+    )
+    ollama_host: str = Field(
+        default="http://localhost:11434",
+        description="Base URL for the Ollama API (used only when llm_provider=ollama)",
+    )
+    ollama_model: str = Field(
+        default="llama3.1:8b",
+        description="Model tag Ollama should run (must already be `ollama pull`-ed)",
     )
 
 
