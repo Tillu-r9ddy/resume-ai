@@ -1,0 +1,108 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — local production-shaped stack.
+#
+# Two services + one optional profile:
+#   • backend  — FastAPI (uvicorn) on :8000, served from backend/Dockerfile
+#   • frontend — nginx serving the built SPA on :8080, proxying /api → backend
+#   • ollama   — OPT-IN via `--profile ollama` for users who want the real LLM
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# WHY one compose file (not dev / prod / test split)?
+# ─────────────────────────────────────────────────────────────────────────────
+#   This stack is the "what does prod actually look like?" shape. Local dev
+#   stays on `npm run dev` + `uvicorn --reload` — both faster than rebuilding
+#   container images on every save. Compose is here for:
+#     • smoke-testing the prod containers before deploy
+#     • CI's "the stack actually boots" job
+#     • demoing the project end-to-end without env setup
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# WHY no `version:` key?
+# ─────────────────────────────────────────────────────────────────────────────
+#   Compose v2 (the default since Docker Desktop 2022+) ignores the
+#   `version:` field and treats its presence as a deprecation warning.
+#   Modern compose files just omit it.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# How to use it
+# ─────────────────────────────────────────────────────────────────────────────
+#   docker compose up --build              # frontend + backend
+#   docker compose --profile ollama up     # also start the local LLM
+#   docker compose down -v                 # tear down + drop volumes
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resume-ai-backend
+    environment:
+      # Allow the SPA origin (where nginx serves it from). In a deploy you'd
+      # also list your public hostname here.
+      RESUME_AI_ENV_NAME: docker
+      RESUME_AI_CORS_ORIGINS: '["http://localhost:8080"]'
+      # Default to the echo provider — Ollama is opt-in via the profile below.
+      # Override at run time with `-e RESUME_AI_LLM_PROVIDER=ollama` to switch.
+      RESUME_AI_LLM_PROVIDER: echo
+      RESUME_AI_OLLAMA_HOST: http://ollama:11434
+    expose:
+      - '8000'
+    ports:
+      # Exposed so you can hit /api/health from the host without going via
+      # nginx. Remove in a hardened deployment.
+      - '8000:8000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8000/api/health',timeout=3).status==200 else sys.exit(1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      # Build context is the REPO ROOT — the frontend Dockerfile needs the
+      # workspace's package-lock.json and the root package.json to run
+      # `npm ci --workspaces`. The Dockerfile path is relative to the context.
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: resume-ai-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '8080:80'
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1/']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Opt-in — `docker compose --profile ollama up` to start a local Llama 3.1.
+  # Off by default because the model download is ~4 GB and 99% of contributors
+  # just want the echo provider for a working demo.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: resume-ai-ollama
+    profiles: ['ollama']
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ['CMD-SHELL', 'ollama list >/dev/null 2>&1 || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ollama-data:
+    # Named volume so model weights survive `docker compose down`. Drop with
+    # `docker compose down -v` when you want a clean slate.

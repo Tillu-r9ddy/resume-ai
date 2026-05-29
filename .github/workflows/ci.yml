@@ -1,3 +1,16 @@
+# Frontend CI — runs on every push to main and on PRs.
+#
+# WHY a separate workflow from backend.yml?
+#   Different toolchain, different cache (npm vs pip), different blast
+#   radius. Splitting keeps GitHub Checks readable ("Frontend: tests"
+#   vs "Backend: pytest") and lets the two jobs run in parallel.
+#
+# WHY pin Node 22 (not 20, not "lts")?
+#   The frontend package.json declares `"engines": { "node": ">=20" }`
+#   but a few transitive deps installed via `vitest@4` warn on Node 20.
+#   Node 22 is the active LTS through 2027. We pin a major version
+#   number — using "lts" silently upgrades us on every Node release.
+
 name: CI
 
 on:
@@ -12,7 +25,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint, typecheck, build
+    name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -36,6 +49,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Test
+        run: npm test -w frontend
 
       - name: Build
         run: npm run build

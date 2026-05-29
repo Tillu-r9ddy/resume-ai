@@ -1,0 +1,14 @@
+# Keep the frontend build context small. node_modules is the big one — we
+# reinstall in the builder stage from package-lock.json so the host's
+# install state never leaks in.
+node_modules/
+dist/
+coverage/
+.vite/
+.eslintcache
+.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
+.git

@@ -1,0 +1,77 @@
+# Docker stack smoke — proves the compose file still builds.
+#
+# WHY a separate workflow?
+#   The image build is the slowest CI job (~3 min cold). Splitting it out
+#   means a doc-only PR doesn't pay for the docker layer cache miss, and
+#   the frontend/backend test jobs don't block on it. They run in parallel.
+#
+# WHY only on docker-related paths?
+#   Same reason as backend.yml's paths filter — a CSS-only PR doesn't need
+#   to rebuild containers to prove correctness.
+#
+# WHY build but not push?
+#   The project doesn't have a registry account yet. Building catches the
+#   "dockerfile drifted from the source layout" class of regression without
+#   needing AWS/GHCR/Docker Hub credentials in CI.
+
+name: Docker stack
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/Dockerfile'
+      - 'backend/.dockerignore'
+      - 'frontend/Dockerfile'
+      - 'frontend/.dockerignore'
+      - 'frontend/nginx.conf'
+      - 'docker-compose.yml'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/Dockerfile'
+      - 'backend/.dockerignore'
+      - 'frontend/Dockerfile'
+      - 'frontend/.dockerignore'
+      - 'frontend/nginx.conf'
+      - 'docker-compose.yml'
+      - '.github/workflows/docker.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: docker compose build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build images
+        # `--pull` so we always pick up base-image security updates instead
+        # of CI's cached layer from weeks ago.
+        run: docker compose build --pull
+
+      - name: Boot stack and probe health
+        # The healthcheck on each service has start_period + retries; we wait
+        # up to 60 s for /api/health to answer. If it doesn't, dump the logs
+        # so the failed run shows what crashed.
+        run: |
+          set -eux
+          docker compose up -d backend
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://localhost:8000/api/health; then
+              echo "backend healthy"
+              break
+            fi
+            sleep 2
+          done
+          curl --fail http://localhost:8000/api/health
+          docker compose down

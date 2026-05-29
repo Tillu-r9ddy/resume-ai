@@ -1,0 +1,22 @@
+# Things the build context doesn't need — keeps `docker build` fast and the
+# image small. Anything matched here is invisible to the COPY instructions.
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+README.md
+docs/
+tests/
