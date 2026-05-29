@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -120,6 +121,34 @@ export default defineConfig({
      * Disabled here because it's annoying when running in tmux/Docker/CI.
      */
     open: false,
+  },
+
+  /**
+   * Vitest configuration — Phase 8.
+   *
+   * WHY this lives in vite.config.ts (not vitest.config.ts):
+   *   Vitest reuses Vite's resolver, plugins (@vitejs/plugin-react for JSX,
+   *   @tailwindcss/vite for class processing) and aliases. Sharing the config
+   *   means tests resolve modules exactly like production — no surprise diff
+   *   between "passes in test, breaks in build".
+   *
+   * `environment: 'jsdom'` gives us window/document so RTL can render.
+   * `setupFiles` extends `expect` with @testing-library/jest-dom matchers and
+   * starts the MSW server so fetch() is intercepted in every test.
+   * `globals: true` means `describe`, `it`, `expect` are available without
+   * imports — matches Jest ergonomics and keeps test files terse.
+   */
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+    css: false,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx'],
+    },
   },
 
   build: {

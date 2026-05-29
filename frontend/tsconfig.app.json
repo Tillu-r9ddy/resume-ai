@@ -11,7 +11,10 @@
     "target": "es2023",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "esnext",
-    "types": ["vite/client"],
+    // Vite client types + Vitest globals (describe/it/expect) + jest-dom
+    // matcher augmentations. Listing all three here means test files don't
+    // need their own tsconfig — they share the strictness of the app.
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "skipLibCheck": true,
 
     // ───────────────────────────────────────────────────────────────────────
